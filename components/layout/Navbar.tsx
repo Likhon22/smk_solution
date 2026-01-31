@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { navigation, siteConfig } from "@/src/data/site";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,31 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 export function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-    const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
+    const [mobileDropdownOpen, setMobileDropdownOpen] = useState<string | null>(null);
+
+    // Keyboard navigation: Close menus on Escape key
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setMobileMenuOpen(false);
+                setMobileDropdownOpen(null);
+                setActiveDropdown(null);
+            }
+        };
+
+        if (mobileMenuOpen) {
+            document.addEventListener("keydown", handleEscape);
+            return () => document.removeEventListener("keydown", handleEscape);
+        }
+    }, [mobileMenuOpen]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            setActiveDropdown(null);
+            setMobileDropdownOpen(null);
+        };
+    }, []);
 
     return (
         <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 shadow-sm">
@@ -85,6 +109,7 @@ export function Navbar() {
                             className="p-2"
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             aria-label="Toggle menu"
+                            aria-expanded={mobileMenuOpen}
                         >
                             <svg
                                 className="h-6 w-6"
@@ -128,12 +153,13 @@ export function Navbar() {
                                     {item.dropdown ? (
                                         <>
                                             <button
-                                                onClick={() => setMobileDropdownOpen(!mobileDropdownOpen)}
+                                                onClick={() => setMobileDropdownOpen(mobileDropdownOpen === item.name ? null : item.name)}
                                                 className="flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-medium text-foreground/80 hover:bg-accent hover:text-industrial-blue"
+                                                aria-expanded={mobileDropdownOpen === item.name}
                                             >
                                                 <span>{item.name}</span>
                                                 <svg
-                                                    className={`h-4 w-4 transition-transform ${mobileDropdownOpen ? "rotate-180" : ""
+                                                    className={`h-4 w-4 transition-transform ${mobileDropdownOpen === item.name ? "rotate-180" : ""
                                                         }`}
                                                     fill="none"
                                                     viewBox="0 0 24 24"
@@ -148,7 +174,7 @@ export function Navbar() {
                                                 </svg>
                                             </button>
                                             <AnimatePresence>
-                                                {mobileDropdownOpen && (
+                                                {mobileDropdownOpen === item.name && (
                                                     <motion.div
                                                         initial={{ opacity: 0, height: 0 }}
                                                         animate={{ opacity: 1, height: "auto" }}
@@ -162,7 +188,7 @@ export function Navbar() {
                                                                 className="block rounded-md px-3 py-2 text-sm text-foreground/60 hover:bg-accent hover:text-industrial-blue"
                                                                 onClick={() => {
                                                                     setMobileMenuOpen(false);
-                                                                    setMobileDropdownOpen(false);
+                                                                    setMobileDropdownOpen(null);
                                                                 }}
                                                             >
                                                                 {dropdownItem.name}

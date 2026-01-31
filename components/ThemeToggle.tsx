@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
     const [theme, setTheme] = useState<"light" | "dark">("light");
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        // Check for saved theme preference or default to light mode
+        setMounted(true);
+        // Check for saved theme preference or default to system preference
         const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
         const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         const initialTheme = savedTheme || systemTheme;
@@ -22,6 +24,33 @@ export function ThemeToggle() {
         localStorage.setItem("theme", newTheme);
         document.documentElement.classList.toggle("dark", newTheme === "dark");
     };
+
+    // Prevent hydration mismatch by not rendering until mounted
+    if (!mounted) {
+        return (
+            <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-9 w-9"
+                aria-label="Toggle theme"
+                disabled
+            >
+                <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
+                </svg>
+            </Button>
+        );
+    }
 
     return (
         <Button
